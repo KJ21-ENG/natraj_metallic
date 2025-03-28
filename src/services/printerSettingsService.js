@@ -86,42 +86,51 @@ class PrinterSettingsService {
     
     async getWindowsPrinters() {
         try {
-            // For Windows, try first with Electron's API
-            const focusedWindow = BrowserWindow.getFocusedWindow();
-            if (focusedWindow) {
-                const printers = await focusedWindow.webContents.getPrintersAsync();
-                const printerNames = printers.map(printer => printer.name);
-                
-                if (printerNames.length > 0) {
-                    return printerNames;
-                }
-            }
-            
-            // Fall back to using wmic
+            // For Windows, use PowerShell to get only active printers
             return new Promise((resolve, reject) => {
-                exec('wmic printer list brief', (error, stdout, stderr) => {
+                // PowerShell command to get only active printers
+                const command = 'powershell.exe -Command "Get-Printer | Where-Object { $_.PrinterStatus -eq \'Normal\' -and $_.WorkOffline -eq $false } | Select-Object -ExpandProperty Name"';
+                
+                exec(command, (error, stdout, stderr) => {
                     if (error) {
-                        console.error(`Error getting Windows printers with wmic: ${error}`);
-                        resolve(this.getDummyPrinters());
+                        console.error(`Error getting Windows printers: ${error}`);
+                        // Try alternative method using wmic
+                        exec('wmic printer where "PrinterStatus=\'3\' and WorkOffline=\'FALSE\'" get Name', (wmicError, wmicStdout, wmicStderr) => {
+                            if (wmicError) {
+                                console.error(`Error getting Windows printers with wmic: ${wmicError}`);
+                                resolve(this.getDummyPrinters());
+                                return;
+                            }
+                            
+                            // Parse wmic output to get printer names
+                            const lines = wmicStdout.split('\n');
+                            const printers = [];
+                            
+                            // Skip first line (header) and process remaining lines
+                            for (let i = 1; i < lines.length; i++) {
+                                const line = lines[i].trim();
+                                if (line && line !== 'Name') {
+                                    printers.push(line);
+                                }
+                            }
+                            
+                            if (printers.length === 0) {
+                                console.warn('No active printers found on Windows');
+                                resolve(this.getDummyPrinters());
+                            } else {
+                                resolve(printers);
+                            }
+                        });
                         return;
                     }
                     
-                    // Parse the output to get printer names
-                    const lines = stdout.split('\n');
-                    const printers = [];
-                    
-                    for (let i = 1; i < lines.length; i++) {
-                        const line = lines[i].trim();
-                        if (line) {
-                            const parts = line.split(/\s{2,}/);
-                            if (parts.length > 0) {
-                                printers.push(parts[0]);
-                            }
-                        }
-                    }
+                    // Parse PowerShell output to get printer names
+                    const printers = stdout.split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line !== '');
                     
                     if (printers.length === 0) {
-                        console.warn('No printers found on Windows with wmic');
+                        console.warn('No active printers found on Windows');
                         resolve(this.getDummyPrinters());
                     } else {
                         resolve(printers);
