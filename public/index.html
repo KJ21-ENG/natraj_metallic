@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Natraj Metallic - Yarn Management System</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      <h2>Natraj Metallic</h2>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="#" class="nav-link" data-screen="inbound">Inbound</a></li>
+        <li><a href="#" class="nav-link" data-screen="issue-to-machine">Issue to Machine</a></li>
+        <li><a href="#" class="nav-link" data-screen="receive-from-machine">Receive from Machine</a></li>
+        <li><a href="#" class="nav-link" data-screen="dispatch">Dispatch</a></li>
+        <li><a href="#" class="nav-link" data-screen="masters">Masters</a></li>
+        <li><a href="#" class="nav-link" data-screen="reports">Reports</a></li>
+        <li><a href="#" class="nav-link" data-screen="printer">Printer</a></li>
+      </ul>
+    </nav>
+  </div>
+  
+  <div class="main-content">
+    <div id="inbound-screen" class="screen">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="rolls-tab">Rolls</button>
+        <button class="tab-btn" data-tab="bobbins-tab">Bobbins</button>
+      </div>
+
+      <div id="rolls-tab" class="tab-content">
+      <h1>Inbound - New Roll Entry</h1>
+      <div class="form-container">
+        <div class="lot-header">
+          <div class="form-group">
+            <label for="lot-number">Lot Number:</label>
+            <input type="text" id="lot-number" readonly>
+          </div>
+          <div class="form-group">
+            <label for="date-received">Date Received:</label>
+            <input type="date" id="date-received" required>
+          </div>
+        </div>
+        
+        <div class="rolls-container">
+          <h3>Roll Details</h3>
+          <form id="roll-form">
+            <div class="form-group">
+              <label for="customer-name">Customer Name:</label>
+              <select id="customer-name" required>
+                <option value="">-- Select Customer --</option>
+                <!-- Will be populated dynamically -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="color-type">Color/Type:</label>
+              <input type="text" id="color-type" required>
+            </div>
+            <div class="form-group">
+              <label for="weight">Weight (kg):</label>
+              <input type="number" id="weight" step="0.01" required>
+            </div>
+            <div class="action-buttons">
+              <button type="button" id="add-roll-btn" class="btn-secondary">Add Roll</button>
+              <button type="button" id="reset-roll-btn" class="btn-secondary">Reset</button>
+            </div>
+          </form>
+        </div>
+        
+        <div id="added-rolls-container" class="hidden">
+          <h3>Rolls Added to Current Lot</h3>
+          <table id="added-rolls-table">
+            <thead>
+              <tr>
+                <th>Roll ID</th>
+                <th>Customer</th>
+                <th>Color/Type</th>
+                <th>Weight (kg)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Will be populated dynamically -->
+            </tbody>
+          </table>
+          
+          <div class="form-actions">
+            <button type="button" id="save-lot-btn" class="btn-primary">Save Lot</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="lots-history">
+        <h3>Recent Lots</h3>
+        <div class="table-container">
+          <table id="lots-history-table">
+            <thead>
+              <tr>
+                <th>Lot Number</th>
+                <th>Date Received</th>
+                <th>Total Rolls</th>
+                <th>Total Weight (kg)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Will be populated dynamically -->
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="bobbins-tab" class="tab-content hidden">
+        <h1>Inbound - New Bobbin Entry</h1>
+        <div class="form-container">
+          <div class="lot-header">
+            <div class="form-group">
+              <label for="bobbin-lot-number">Lot Number:</label>
+              <input type="text" id="bobbin-lot-number" readonly>
+            </div>
+            <div class="form-group">
+              <label for="bobbin-date-received">Date Received:</label>
+              <input type="date" id="bobbin-date-received" required>
+            </div>
+          </div>
+          
+          <div class="bobbins-container">
+            <h3>Bobbin Details</h3>
+            <form id="bobbin-form">
+              <div class="form-group">
+                <label for="bobbin-customer-name">Customer Name:</label>
+                <select id="bobbin-customer-name" required>
+                  <option value="">-- Select Customer --</option>
+                  <!-- Will be populated dynamically -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="bobbin-type-inbound">Bobbin Type:</label>
+                <select id="bobbin-type-inbound" required>
+                  <option value="">-- Select Bobbin Type --</option>
+                  <!-- Will be populated dynamically -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="bobbin-quantity">Quantity:</label>
+                <input type="number" id="bobbin-quantity" required min="1">
+              </div>
+              <div class="action-buttons">
+                <button type="button" id="add-bobbin-btn" class="btn-secondary">Add Bobbins</button>
+                <button type="button" id="reset-bobbin-btn" class="btn-secondary">Reset</button>
+              </div>
+            </form>
+          </div>
+          
+          <div id="added-bobbins-container" class="hidden">
+            <h3>Bobbins Added to Current Lot</h3>
+            <table id="added-bobbins-table">
+              <thead>
+                <tr>
+                  <th>Bobbin ID</th>
+                  <th>Customer</th>
+                  <th>Bobbin Type</th>
+                  <th>Quantity</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Will be populated dynamically -->
+              </tbody>
+            </table>
+            
+            <div class="form-actions">
+              <button type="button" id="save-bobbin-lot-btn" class="btn-primary">Save Lot</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bobbin-lots-history">
+          <h3>Recent Bobbin Lots</h3>
+          <div class="table-container">
+            <table id="bobbin-lots-history-table">
+              <thead>
+                <tr>
+                  <th>Lot Number</th>
+                  <th>Date Received</th>
+                  <th>Customer</th>
+                  <th>Total Bobbins</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="issue-to-machine-screen" class="screen hidden">
+      <h1>Issue to Machine</h1>
+      <div class="form-container">
+        <div class="form-group">
+          <label for="roll-select">Select Roll:</label>
+          <select id="roll-select" required>
+            <option value="">-- Select a Roll --</option>
+            <!-- Will be populated dynamically -->
+          </select>
+        </div>
+        <div id="selected-roll-details" class="details-box hidden">
+          <!-- Roll details will be shown here -->
+        </div>
+        <form id="issue-form" class="hidden">
+          <div class="form-group">
+            <label for="operator-name">Operator Name:</label>
+            <input type="text" id="operator-name" required>
+          </div>
+          <div class="form-group">
+            <label for="machine-number">Machine No:</label>
+            <select id="machine-number" required>
+              <option value="">-- Select Machine --</option>
+              <!-- Will be populated dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cut">Cut (Slit Count):</label>
+            <input type="number" id="cut" required>
+          </div>
+          <div class="form-group">
+            <label for="bobbin-quantity">Bobbin Quantity:</label>
+            <input type="number" id="bobbin-quantity" required min="0">
+          </div>
+          <div class="form-group">
+            <label for="bobbin-type-issue">Bobbin Type:</label>
+            <select id="bobbin-type-issue" required>
+              <option value="">-- Select Bobbin Type --</option>
+              <!-- Will be populated dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="issue-date">Issue Date:</label>
+            <input type="date" id="issue-date" required>
+          </div>
+          <button type="submit" class="btn-primary">Issue to Machine</button>
+        </form>
+      </div>
+
+      <div class="issued-rolls-history">
+        <h3>Currently Issued Rolls</h3>
+        <div class="table-container">
+          <table id="issued-rolls-table">
+            <thead>
+              <tr>
+                <th>Roll ID</th>
+                <th>Customer</th>
+                <th>Color/Type</th>
+                <th>Weight (kg)</th>
+                <th>Operator</th>
+                <th>Machine No.</th>
+                <th>Bobbin Qty (Type)</th>
+                <th>Issued Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Will be populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <div id="receive-from-machine-screen" class="screen hidden">
+      <h1>Receive from Machine</h1>
+      <div class="form-container">
+        <div class="form-group">
+          <label for="on-machine-select">Select Roll on Machine:</label>
+          <select id="on-machine-select" required>
+            <option value="">-- Select a Roll --</option>
+            <!-- Will be populated dynamically -->
+          </select>
+        </div>
+        <div id="on-machine-details" class="details-box hidden">
+          <!-- Roll details will be shown here -->
+        </div>
+        <div id="box-entry-container" class="hidden">
+          <h2>Box Details</h2>
+          <form id="box-form">
+            <div class="form-group">
+              <label for="gross-weight">Gross Weight (kg):</label>
+              <input type="number" id="gross-weight" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label for="tare-weight">Tare Weight (kg):</label>
+              <input type="number" id="tare-weight" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label for="net-weight">Net Weight (kg):</label>
+              <input type="number" id="net-weight" step="0.01" required readonly>
+            </div>
+            <div class="form-group">
+              <label for="box-type">Box Type:</label>
+              <select id="box-type" required>
+                <option value="">-- Select Box Type --</option>
+                <!-- Will be populated dynamically -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="bobbin-count">Bobbin Count:</label>
+              <input type="number" id="bobbin-count" required>
+            </div>
+            <div class="form-group">
+              <label for="bobbin-type-receive">Bobbin Type:</label>
+              <select id="bobbin-type-receive" required>
+                <option value="">-- Select Bobbin Type --</option>
+                <!-- Will be populated dynamically -->
+              </select>
+            </div>
+            <button type="button" id="add-box-btn" class="btn-secondary">Add Box</button>
+          </form>
+          
+          <div id="boxes-table-container" class="hidden">
+            <h3>Boxes Added</h3>
+            <table id="boxes-table">
+              <thead>
+                <tr>
+                  <th>Box ID</th>
+                  <th>Gross Weight</th>
+                  <th>Tare Weight</th>
+                  <th>Net Weight</th>
+                  <th>Bobbin Count</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Will be populated dynamically -->
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3">Total Net Weight:</td>
+                  <td id="total-net-weight">0.00 kg</td>
+                  <td id="total-bobbin-count">0</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          
+          <div class="form-group checkbox-group">
+            <input type="checkbox" id="wastage-checkbox">
+            <label for="wastage-checkbox">Pending is Wastage</label>
+          </div>
+          
+          <button type="button" id="save-boxes-btn" class="btn-primary">Save & Print Labels</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="dispatch-screen" class="screen hidden">
+      <h1>Dispatch</h1>
+      <div class="form-container">
+        <div class="form-group">
+          <label for="box-scan">Scan Box ID or Select:</label>
+          <div class="scan-input-group">
+            <input type="text" id="box-scan" placeholder="Scan barcode or enter box ID">
+            <button type="button" id="add-to-dispatch-btn">Add</button>
+          </div>
+        </div>
+        
+        <div class="box-selection">
+          <h3>Available Boxes</h3>
+          <div id="available-boxes-container">
+            <!-- Will be populated dynamically -->
+          </div>
+        </div>
+        
+        <div id="dispatch-cart-container" class="hidden">
+          <h3>Dispatch Cart</h3>
+          <table id="dispatch-cart-table">
+            <thead>
+              <tr>
+                <th>Box ID</th>
+                <th>Roll ID</th>
+                <th>Net Weight</th>
+                <th>Bobbin Count</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Will be populated dynamically -->
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2">Totals:</td>
+                <td id="total-weight">0.00 kg</td>
+                <td id="total-bobbins">0</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+          
+          <div class="form-group">
+            <label for="customer-dispatch">Customer Name:</label>
+            <select id="customer-dispatch" required>
+              <option value="">-- Select Customer --</option>
+              <!-- Will be populated dynamically -->
+            </select>
+          </div>
+          
+          <button type="button" id="confirm-dispatch-btn" class="btn-primary">Confirm Dispatch</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="masters-screen" class="screen hidden">
+      <h1>Masters</h1>
+      <div class="tabs-container">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="customers-tab">Customers</button>
+          <button class="tab-btn" data-tab="bobbin-types-tab">Bobbin Types</button>
+          <button class="tab-btn" data-tab="box-types-tab">Box Types</button>
+          <button class="tab-btn" data-tab="machines-tab">Machines</button>
+        </div>
+        
+        <div id="customers-tab" class="tab-content">
+          <div class="action-bar">
+            <button id="new-customer-btn" class="btn-primary">New Customer</button>
+          </div>
+          
+          <div class="table-container">
+            <table id="customers-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Customer Name</th>
+                  <th>Contact Person</th>
+                  <th>Contact Number</th>
+                  <th>Email</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+          
+          <div id="customer-form-container" class="form-container hidden">
+            <h2 id="customer-form-title">New Customer</h2>
+            <form id="customer-form">
+              <input type="hidden" id="customer-id">
+              <div class="form-group">
+                <label for="customer-name-input">Customer Name:</label>
+                <input type="text" id="customer-name-input" required>
+              </div>
+              <div class="form-group">
+                <label for="contact-person">Contact Person:</label>
+                <input type="text" id="contact-person">
+              </div>
+              <div class="form-group">
+                <label for="contact-number">Contact Number:</label>
+                <input type="text" id="contact-number">
+              </div>
+              <div class="form-group">
+                <label for="customer-email">Email:</label>
+                <input type="email" id="customer-email">
+              </div>
+              <div class="form-group">
+                <label for="customer-address">Address:</label>
+                <textarea id="customer-address" rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="customer-notes">Notes:</label>
+                <textarea id="customer-notes" rows="2"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">Save</button>
+                <button type="button" id="cancel-customer-btn" class="btn-secondary">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <div id="bobbin-types-tab" class="tab-content hidden">
+          <div class="action-bar">
+            <button id="new-bobbin-type-btn" class="btn-primary">New Bobbin Type</button>
+          </div>
+          
+          <div class="table-container">
+            <table id="bobbin-types-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Type Name</th>
+                  <th>Description</th>
+                  <th>Weight (g)</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+          
+          <div id="bobbin-type-form-container" class="form-container hidden">
+            <h2 id="bobbin-type-form-title">New Bobbin Type</h2>
+            <form id="bobbin-type-form">
+              <input type="hidden" id="bobbin-type-id">
+              <div class="form-group">
+                <label for="type-name">Type Name:</label>
+                <input type="text" id="type-name" required>
+              </div>
+              <div class="form-group">
+                <label for="type-description">Description:</label>
+                <input type="text" id="type-description">
+              </div>
+              <div class="form-group">
+                <label for="type-weight">Weight (g):</label>
+                <input type="number" id="type-weight" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label for="type-notes">Notes:</label>
+                <textarea id="type-notes" rows="2"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">Save</button>
+                <button type="button" id="cancel-bobbin-type-btn" class="btn-secondary">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <div id="box-types-tab" class="tab-content hidden">
+          <div class="action-bar">
+            <button id="new-box-type-btn" class="btn-primary">New Box Type</button>
+          </div>
+          
+          <div class="table-container">
+            <table id="box-types-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Type Name</th>
+                  <th>Description</th>
+                  <th>Dimensions</th>
+                  <th>Tare Weight (kg)</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+          
+          <div id="box-type-form-container" class="form-container hidden">
+            <h2 id="box-type-form-title">New Box Type</h2>
+            <form id="box-type-form">
+              <input type="hidden" id="box-type-id">
+              <div class="form-group">
+                <label for="box-type-name">Type Name:</label>
+                <input type="text" id="box-type-name" required>
+              </div>
+              <div class="form-group">
+                <label for="box-type-description">Description:</label>
+                <input type="text" id="box-type-description">
+              </div>
+              <div class="form-group">
+                <label for="box-dimensions">Dimensions:</label>
+                <input type="text" id="box-dimensions" placeholder="e.g. 30x40x25 cm">
+              </div>
+              <div class="form-group">
+                <label for="box-tare-weight">Tare Weight (kg):</label>
+                <input type="number" id="box-tare-weight" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label for="box-type-notes">Notes:</label>
+                <textarea id="box-type-notes" rows="2"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">Save</button>
+                <button type="button" id="cancel-box-type-btn" class="btn-secondary">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Machines Tab -->
+        <div id="machines-tab" class="tab-content hidden">
+          <div class="action-bar">
+            <button id="new-machine-btn" class="btn-primary">New Machine</button>
+          </div>
+          
+          <div class="table-container">
+            <table id="machines-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Machine Number</th>
+                  <th>Description</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+          
+          <div id="machine-form-container" class="form-container hidden">
+            <h2 id="machine-form-title">New Machine</h2>
+            <form id="machine-form">
+              <input type="hidden" id="machine-id">
+              <div class="form-group">
+                <label for="machine-number-input">Machine Number:</label>
+                <input type="text" id="machine-number-input" required>
+              </div>
+              <div class="form-group">
+                <label for="machine-description">Description:</label>
+                <input type="text" id="machine-description">
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">Save</button>
+                <button type="button" id="cancel-machine-btn" class="btn-secondary">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="reports-screen" class="screen hidden">
+      <h1>Reports</h1>
+      <div class="reports-container">
+        <div class="report-type">
+          <h3>Stock Report</h3>
+          <button type="button" class="btn-secondary" id="stock-report-btn">Generate</button>
+        </div>
+        <div class="report-type">
+          <h3>Production Report</h3>
+          <div class="form-group">
+            <label for="prod-report-from">From:</label>
+            <input type="date" id="prod-report-from">
+          </div>
+          <div class="form-group">
+            <label for="prod-report-to">To:</label>
+            <input type="date" id="prod-report-to">
+          </div>
+          <button type="button" class="btn-secondary" id="prod-report-btn">Generate</button>
+        </div>
+        <div class="report-type">
+          <h3>Dispatch Report</h3>
+          <div class="form-group">
+            <label for="disp-report-from">From:</label>
+            <input type="date" id="disp-report-from">
+          </div>
+          <div class="form-group">
+            <label for="disp-report-to">To:</label>
+            <input type="date" id="disp-report-to">
+          </div>
+          <button type="button" class="btn-secondary" id="disp-report-btn">Generate</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="printer-screen" class="screen hidden">
+      <h1>Printer Settings</h1>
+      <div class="form-container">
+        <form id="printer-settings-form">
+          <div class="form-group">
+            <label for="label-printer">Printer for Label:</label>
+            <select id="label-printer" class="form-control" required>
+              <option value="">Select Printer</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="invoice-printer">Printer for Chalan/Invoice:</label>
+            <select id="invoice-printer" class="form-control" required>
+              <option value="">Select Printer</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Save Settings</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lot Details Modal -->
+  <div id="lot-details-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title"></h2>
+        <button type="button" class="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="lot-summary"></div>
+        <div class="table-container">
+          <table id="lot-rolls-table">
+            <thead>
+              <tr>
+                <th>Roll ID</th>
+                <th>Customer</th>
+                <th>Color/Type</th>
+                <th>Weight (kg)</th>
+                <th>Pending Weight (kg)</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Will be populated dynamically -->
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3">Total Weight:</td>
+                <td colspan="3" id="lot-total-weight"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bobbin Lot Details Modal -->
+  <div id="bobbin-lot-details-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="bobbin-modal-title">Bobbin Lot Details</h2>
+        <button type="button" class="close-modal-bobbin">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="bobbin-lot-summary"></div>
+        <div class="table-container">
+          <table id="bobbin-lot-details-table">
+            <thead>
+              <tr>
+                <th>Bobbin ID</th>
+                <th>Customer</th>
+                <th>Bobbin Type</th>
+                <th>Quantity</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Will be populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./renderer.js"></script>
+</body>
+</html> 

@@ -1,0 +1,44 @@
+{
+  "name": "natraj_metallic",
+  "version": "1.0.0",
+  "description": "A yarn management system for tracking rolls, goods on machine, boxes, and dispatches",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "cross-env NODE_ENV=development electron .",
+    "build": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "electron",
+    "yarn",
+    "inventory",
+    "management"
+  ],
+  "author": "Natraj Metallic",
+  "license": "ISC",
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^35.0.2",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "papaparse": "^5.5.2"
+  },
+  "build": {
+    "appId": "com.natraj.metallic",
+    "productName": "Natraj Metallic",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  }
+}
