@@ -86,81 +86,51 @@ class PrinterSettingsService {
     
     async getWindowsPrinters() {
         try {
-            // For Windows, use PowerShell to get all printers with their status
-            return new Promise((resolve, reject) => {
-                // PowerShell command to get all printers with their status
-                const command = 'powershell.exe -Command "Get-Printer | Select-Object Name, PrinterStatus, WorkOffline | ConvertTo-Json"';
+            // For Windows, try first with Electron's API
+            const focusedWindow = BrowserWindow.getFocusedWindow();
+            if (focusedWindow) {
+                const printers = await focusedWindow.webContents.getPrintersAsync();
+                const printerNames = printers.map(printer => printer.name);
                 
-                exec(command, (error, stdout, stderr) => {
+                if (printerNames.length > 0) {
+                    return printerNames;
+                }
+            }
+            
+            // Fall back to using wmic
+            return new Promise((resolve, reject) => {
+                exec('wmic printer list brief', (error, stdout, stderr) => {
                     if (error) {
-                        console.error(`Error getting Windows printers: ${error}`);
-                        // Try alternative method using wmic
-                        exec('wmic printer get Name,PrinterStatus,WorkOffline /format:csv', (wmicError, wmicStdout, wmicStderr) => {
-                            if (wmicError) {
-                                console.error(`Error getting Windows printers with wmic: ${wmicError}`);
-                                resolve(this.getDummyPrintersWithStatus());
-                                return;
-                            }
-                            
-                            // Parse wmic CSV output
-                            const lines = wmicStdout.split('\n')
-                                .map(line => line.trim())
-                                .filter(line => line.length > 0);
-                            
-                            if (lines.length <= 1) {
-                                console.warn('No printers found on Windows');
-                                resolve(this.getDummyPrintersWithStatus());
-                                return;
-                            }
-
-                            // Skip header row and process printer data
-                            const printers = [];
-                            for (let i = 1; i < lines.length; i++) {
-                                const [name, status, offline] = lines[i].split(',');
-                                if (name && name !== 'Name') {
-                                    printers.push({
-                                        name: name,
-                                        isActive: status === '3' && offline.toLowerCase() === 'false'
-                                    });
-                                }
-                            }
-                            
-                            // Sort printers: active first, then inactive
-                            printers.sort((a, b) => {
-                                if (a.isActive === b.isActive) return a.name.localeCompare(b.name);
-                                return a.isActive ? -1 : 1;
-                            });
-                            
-                            resolve(printers);
-                        });
+                        console.error(`Error getting Windows printers with wmic: ${error}`);
+                        resolve(this.getDummyPrinters());
                         return;
                     }
                     
-                    try {
-                        // Parse PowerShell JSON output
-                        const printersData = JSON.parse(stdout);
-                        const printers = (Array.isArray(printersData) ? printersData : [printersData])
-                            .map(printer => ({
-                                name: printer.Name,
-                                isActive: printer.PrinterStatus === 'Normal' && !printer.WorkOffline
-                            }));
-                        
-                        // Sort printers: active first, then inactive
-                        printers.sort((a, b) => {
-                            if (a.isActive === b.isActive) return a.name.localeCompare(b.name);
-                            return a.isActive ? -1 : 1;
-                        });
-                        
+                    // Parse the output to get printer names
+                    const lines = stdout.split('\n');
+                    const printers = [];
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (line) {
+                            const parts = line.split(/\s{2,}/);
+                            if (parts.length > 0) {
+                                printers.push(parts[0]);
+                            }
+                        }
+                    }
+                    
+                    if (printers.length === 0) {
+                        console.warn('No printers found on Windows with wmic');
+                        resolve(this.getDummyPrinters());
+                    } else {
                         resolve(printers);
-                    } catch (parseError) {
-                        console.error(`Error parsing printer data: ${parseError}`);
-                        resolve(this.getDummyPrintersWithStatus());
                     }
                 });
             });
         } catch (error) {
             console.error(`Error in getWindowsPrinters: ${error}`);
-            return this.getDummyPrintersWithStatus();
+            return this.getDummyPrinters();
         }
     }
     
@@ -188,19 +158,13 @@ class PrinterSettingsService {
         });
     }
     
-    getDummyPrintersWithStatus() {
-        return [
-            { name: 'Default Printer', isActive: true },
-            { name: 'PDF Printer', isActive: true },
-            { name: 'Microsoft Print to PDF', isActive: true },
-            { name: 'Disconnected Printer', isActive: false },
-            { name: 'Offline Printer', isActive: false }
-        ];
-    }
-    
-    // Update the dummy printers method to maintain backward compatibility
     getDummyPrinters() {
-        return this.getDummyPrintersWithStatus().map(p => p.name);
+        return [
+            'Default Printer',
+            'PDF Printer',
+            'Microsoft Print to PDF',
+            'Document Printer'
+        ];
     }
 }
 

@@ -2642,126 +2642,132 @@ function deleteMachine(machineId) {
 }
 
 // Printer Settings Screen Functions
-function populatePrinterDropdowns(labelSelect, invoiceSelect, printers) {
-    // Clear existing options
-    labelSelect.innerHTML = '';
-    invoiceSelect.innerHTML = '';
+function setupPrinterSettings() {
+  const form = document.getElementById('printer-settings-form');
+  const labelPrinterSelect = document.getElementById('label-printer');
+  const invoicePrinterSelect = document.getElementById('invoice-printer');
+  let currentPrinterSettings = null;
+
+  // Show loading state
+  const loadingOption = document.createElement('option');
+  loadingOption.value = '';
+  loadingOption.textContent = 'Loading printers...';
+  labelPrinterSelect.innerHTML = '';
+  invoicePrinterSelect.innerHTML = '';
+  labelPrinterSelect.appendChild(loadingOption.cloneNode(true));
+  invoicePrinterSelect.appendChild(loadingOption);
+
+  // Function to populate dropdowns with dummy data
+  const populateWithDummyPrinters = () => {
+    // Clear the loading option
+    labelPrinterSelect.innerHTML = '';
+    invoicePrinterSelect.innerHTML = '';
     
-    // Add default empty option
+    // Add the default empty option
     const emptyOption = document.createElement('option');
     emptyOption.value = '';
     emptyOption.textContent = 'Select Printer';
-    labelSelect.appendChild(emptyOption.cloneNode(true));
-    invoiceSelect.appendChild(emptyOption.cloneNode(true));
+    labelPrinterSelect.appendChild(emptyOption.cloneNode(true));
+    invoicePrinterSelect.appendChild(emptyOption.cloneNode(true));
     
-    if (!printers || !Array.isArray(printers) || printers.length === 0) {
-        const noOption = document.createElement('option');
-        noOption.value = '';
-        noOption.textContent = 'No printers found';
-        noOption.disabled = true;
-        labelSelect.appendChild(noOption.cloneNode(true));
-        invoiceSelect.appendChild(noOption);
-        return;
+    // Add dummy printers
+    const dummyPrinters = [
+      'Default Printer',
+      'PDF Printer',
+      'Microsoft Print to PDF',
+      'Document Printer'
+    ];
+    
+    dummyPrinters.forEach(printer => {
+      const option = document.createElement('option');
+      option.value = printer;
+      option.textContent = printer;
+      labelPrinterSelect.appendChild(option.cloneNode(true));
+      invoicePrinterSelect.appendChild(option.cloneNode(true));
+    });
+    
+    // Set the selected values based on settings
+    if (currentPrinterSettings) {
+      labelPrinterSelect.value = currentPrinterSettings.labelPrinter || '';
+      invoicePrinterSelect.value = currentPrinterSettings.invoicePrinter || '';
     }
+  };
 
-    // Convert old format to new format if necessary
-    const formattedPrinters = printers.map(printer => {
-        if (typeof printer === 'string') {
-            return { name: printer, isActive: true };
-        }
-        return printer;
-    });
-
-    // Sort printers: active first, then inactive
-    const sortedPrinters = formattedPrinters.sort((a, b) => {
-        if (!a || !b) return 0;
-        if (a.isActive === b.isActive) {
-            return (a.name || '').localeCompare(b.name || '');
-        }
-        return a.isActive ? -1 : 1;
-    });
-
-    // Add printer options
-    sortedPrinters.forEach(printer => {
-        if (!printer || !printer.name) return;
-
-        const option = document.createElement('option');
-        option.value = printer.name;
-        option.textContent = printer.name + (printer.isActive ? ' (Active)' : ' (Inactive)');
-        option.className = printer.isActive ? 'printer-option printer-option-active' : 'printer-option printer-option-inactive';
-        option.setAttribute('data-active', printer.isActive);
+  // Load current settings first
+  window.api.getPrinterSettings()
+    .then(settings => {
+      // Store the settings for later use
+      currentPrinterSettings = settings || { labelPrinter: '', invoicePrinter: '' };
+      
+      // Then load available printers
+      return window.api.getAvailablePrinters();
+    })
+    .then(printers => {
+      // Clear the loading option
+      labelPrinterSelect.innerHTML = '';
+      invoicePrinterSelect.innerHTML = '';
+      
+      // Add the default empty option
+      const emptyOption = document.createElement('option');
+      emptyOption.value = '';
+      emptyOption.textContent = 'Select Printer';
+      labelPrinterSelect.appendChild(emptyOption.cloneNode(true));
+      invoicePrinterSelect.appendChild(emptyOption.cloneNode(true));
+      
+      // Add printer options
+      if (printers && printers.length > 0) {
+        printers.forEach(printer => {
+          const option = document.createElement('option');
+          option.value = printer;
+          option.textContent = printer;
+          labelPrinterSelect.appendChild(option.cloneNode(true));
+          invoicePrinterSelect.appendChild(option);
+        });
         
-        labelSelect.appendChild(option.cloneNode(true));
-        invoiceSelect.appendChild(option.cloneNode(true));
+        // Set the selected values based on settings
+        if (currentPrinterSettings) {
+          labelPrinterSelect.value = currentPrinterSettings.labelPrinter || '';
+          invoicePrinterSelect.value = currentPrinterSettings.invoicePrinter || '';
+        }
+      } else {
+        // No printers found, populate with dummy printers
+        populateWithDummyPrinters();
+      }
+    })
+    .catch(error => {
+      console.error('Error loading printer settings:', error);
+      
+      // Initialize with default settings if we couldn't load them
+      if (!currentPrinterSettings) {
+        currentPrinterSettings = { labelPrinter: '', invoicePrinter: '' };
+      }
+      
+      // Show dummy printers on error
+      populateWithDummyPrinters();
     });
 
-    // Set previously selected values if they exist
-    window.api.getPrinterSettings()
-        .then(settings => {
-            if (settings.labelPrinter) {
-                labelSelect.value = settings.labelPrinter;
-            }
-            if (settings.invoicePrinter) {
-                invoiceSelect.value = settings.invoicePrinter;
-            }
-        })
-        .catch(error => {
-            console.error('Error loading printer settings:', error);
-        });
-}
+  // Handle form submission
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const settings = {
+      labelPrinter: labelPrinterSelect.value,
+      invoicePrinter: invoicePrinterSelect.value
+    };
 
-function setupPrinterSettings() {
-    const labelPrinterSelect = document.getElementById('label-printer');
-    const invoicePrinterSelect = document.getElementById('invoice-printer');
-    const saveButton = document.getElementById('save-printer-settings');
-
-    // Show loading state
-    const loadingOption = document.createElement('option');
-    loadingOption.value = '';
-    loadingOption.textContent = 'Loading printers...';
-    labelPrinterSelect.innerHTML = '';
-    invoicePrinterSelect.innerHTML = '';
-    labelPrinterSelect.appendChild(loadingOption.cloneNode(true));
-    invoicePrinterSelect.appendChild(loadingOption);
-
-    // Load available printers
-    window.api.getAvailablePrinters()
-        .then(printers => {
-            populatePrinterDropdowns(labelPrinterSelect, invoicePrinterSelect, printers);
-        })
-        .catch(error => {
-            console.error('Error loading printers:', error);
-            // Show error state
-            const errorOption = document.createElement('option');
-            errorOption.value = '';
-            errorOption.textContent = 'Error loading printers';
-            errorOption.disabled = true;
-            labelPrinterSelect.innerHTML = '';
-            invoicePrinterSelect.innerHTML = '';
-            labelPrinterSelect.appendChild(errorOption.cloneNode(true));
-            invoicePrinterSelect.appendChild(errorOption);
-        });
-
-    // Handle save button click
-    saveButton.addEventListener('click', function() {
-        const settings = {
-            labelPrinter: labelPrinterSelect.value,
-            invoicePrinter: invoicePrinterSelect.value
-        };
-
-        window.api.updatePrinterSettings(settings)
-            .then(success => {
-                if (success) {
-                    alert('Printer settings saved successfully!');
-                } else {
-                    alert('Error saving printer settings. Please try again.');
-                }
-            })
-            .catch(error => {
-                console.error('Error saving printer settings:', error);
-                alert('Error saving printer settings. Please try again.');
-            });
-    });
+    window.api.updatePrinterSettings(settings)
+      .then(success => {
+        if (success) {
+          alert('Printer settings saved successfully!');
+        } else {
+          alert('Error saving printer settings. Please try again.');
+        }
+      })
+      .catch(error => {
+        console.error('Error saving printer settings:', error);
+        alert('Error saving printer settings. Please try again.');
+      });
+  });
 }
 
 // Print Test Screen Functions
