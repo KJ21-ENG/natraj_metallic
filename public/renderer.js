@@ -2652,9 +2652,9 @@ function populatePrinterDropdowns(labelSelect, invoiceSelect, printers) {
     emptyOption.value = '';
     emptyOption.textContent = 'Select Printer';
     labelSelect.appendChild(emptyOption.cloneNode(true));
-    invoiceSelect.appendChild(emptyOption);
+    invoiceSelect.appendChild(emptyOption.cloneNode(true));
     
-    if (!printers || printers.length === 0) {
+    if (!printers || !Array.isArray(printers) || printers.length === 0) {
         const noOption = document.createElement('option');
         noOption.value = '';
         noOption.textContent = 'No printers found';
@@ -2664,14 +2664,27 @@ function populatePrinterDropdowns(labelSelect, invoiceSelect, printers) {
         return;
     }
 
+    // Convert old format to new format if necessary
+    const formattedPrinters = printers.map(printer => {
+        if (typeof printer === 'string') {
+            return { name: printer, isActive: true };
+        }
+        return printer;
+    });
+
     // Sort printers: active first, then inactive
-    const sortedPrinters = printers.sort((a, b) => {
-        if (a.isActive === b.isActive) return a.name.localeCompare(b.name);
+    const sortedPrinters = formattedPrinters.sort((a, b) => {
+        if (!a || !b) return 0;
+        if (a.isActive === b.isActive) {
+            return (a.name || '').localeCompare(b.name || '');
+        }
         return a.isActive ? -1 : 1;
     });
 
     // Add printer options
     sortedPrinters.forEach(printer => {
+        if (!printer || !printer.name) return;
+
         const option = document.createElement('option');
         option.value = printer.name;
         option.textContent = printer.name + (printer.isActive ? ' (Active)' : ' (Inactive)');
