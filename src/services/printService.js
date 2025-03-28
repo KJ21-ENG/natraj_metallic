@@ -391,6 +391,15 @@ const printLabel = async (printData) => {
   // Write the HTML to a temporary file
   fs.writeFileSync(tempFile, html);
   
+  // Get printer settings
+  const printerSettingsService = require('./printerSettingsService');
+  const printerSettings = printerSettingsService.getSettings();
+  const selectedPrinter = type === 'box' ? printerSettings.labelPrinter : printerSettings.invoicePrinter;
+  
+  if (!selectedPrinter) {
+    throw new Error(`No printer configured for ${type} printing`);
+  }
+  
   // Create a browser window to print the label
   const printWindow = new BrowserWindow({
     width: 800,
@@ -403,7 +412,33 @@ const printLabel = async (printData) => {
   
   await printWindow.loadFile(tempFile);
   
-  return tempFile;
+  try {
+    // Print silently to the selected printer
+    await new Promise((resolve, reject) => {
+      printWindow.webContents.print(
+        {
+          silent: true,
+          printBackground: true,
+          deviceName: selectedPrinter
+        },
+        (success, errorType) => {
+          if (success) {
+            resolve();
+          } else {
+            reject(new Error(`Print failed: ${errorType}`));
+          }
+        }
+      );
+    });
+
+    // Clean up
+    printWindow.close();
+    
+    return tempFile;
+  } catch (error) {
+    printWindow.close();
+    throw error;
+  }
 };
 
 module.exports = {

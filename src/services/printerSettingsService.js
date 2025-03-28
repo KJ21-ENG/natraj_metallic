@@ -3,7 +3,7 @@ const path = require('path');
 const { app, BrowserWindow } = require('electron');
 const { exec } = require('child_process');
 const os = require('os');
-
+//hii
 class PrinterSettingsService {
     constructor() {
         this.dataFile = path.join(app.getPath('userData'), 'data', 'printer_settings.json');

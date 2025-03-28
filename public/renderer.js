@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setupDispatchScreen();
   setupReportsScreen();
   setupPrinterSettings();
+  setupPrintTest();
   
   // Initialize the default screen (Inbound)
   document.querySelector('.nav-link[data-screen="inbound"]').classList.add('active');
@@ -2766,5 +2767,164 @@ function setupPrinterSettings() {
         console.error('Error saving printer settings:', error);
         alert('Error saving printer settings. Please try again.');
       });
+  });
+}
+
+// Print Test Screen Functions
+function createPlaceholderImages() {
+  // Create label test preview
+  const labelCanvas = document.createElement('canvas');
+  labelCanvas.width = 300;
+  labelCanvas.height = 200;
+  const labelCtx = labelCanvas.getContext('2d');
+  
+  // Draw label background
+  labelCtx.fillStyle = '#ffffff';
+  labelCtx.fillRect(0, 0, 300, 200);
+  
+  // Draw label border
+  labelCtx.strokeStyle = '#000000';
+  labelCtx.lineWidth = 2;
+  labelCtx.strokeRect(5, 5, 290, 190);
+  
+  // Add label text
+  labelCtx.fillStyle = '#000000';
+  labelCtx.font = '16px Arial';
+  labelCtx.textAlign = 'center';
+  labelCtx.fillText('Label Test Preview', 150, 50);
+  labelCtx.font = '12px Arial';
+  labelCtx.fillText('This is a sample label layout', 150, 80);
+  labelCtx.fillText('Date: ' + new Date().toLocaleDateString(), 150, 100);
+  
+  // Convert to data URL and set as image source
+  const labelPreview = document.getElementById('label-test-preview');
+  labelPreview.src = labelCanvas.toDataURL('image/png');
+  
+  // Create invoice test preview
+  const invoiceCanvas = document.createElement('canvas');
+  invoiceCanvas.width = 300;
+  invoiceCanvas.height = 400;
+  const invoiceCtx = invoiceCanvas.getContext('2d');
+  
+  // Draw invoice background
+  invoiceCtx.fillStyle = '#ffffff';
+  invoiceCtx.fillRect(0, 0, 300, 400);
+  
+  // Draw invoice border
+  invoiceCtx.strokeStyle = '#000000';
+  invoiceCtx.lineWidth = 2;
+  invoiceCtx.strokeRect(5, 5, 290, 390);
+  
+  // Add invoice header
+  invoiceCtx.fillStyle = '#000000';
+  invoiceCtx.font = '20px Arial';
+  invoiceCtx.textAlign = 'center';
+  invoiceCtx.fillText('INVOICE', 150, 40);
+  
+  // Add invoice details
+  invoiceCtx.font = '14px Arial';
+  invoiceCtx.textAlign = 'left';
+  invoiceCtx.fillText('Invoice No: TEST-001', 20, 80);
+  invoiceCtx.fillText('Date: ' + new Date().toLocaleDateString(), 20, 100);
+  
+  // Add sample table
+  invoiceCtx.strokeStyle = '#000000';
+  invoiceCtx.lineWidth = 1;
+  invoiceCtx.strokeRect(20, 120, 260, 200);
+  
+  // Add table headers
+  invoiceCtx.fillStyle = '#000000';
+  invoiceCtx.font = '12px Arial';
+  invoiceCtx.fillText('Item', 30, 140);
+  invoiceCtx.fillText('Quantity', 150, 140);
+  invoiceCtx.fillText('Amount', 230, 140);
+  
+  // Add sample data
+  invoiceCtx.fillText('Test Item 1', 30, 160);
+  invoiceCtx.fillText('2', 150, 160);
+  invoiceCtx.fillText('₹1000', 230, 160);
+  
+  // Add total
+  invoiceCtx.font = '14px Arial';
+  invoiceCtx.fillText('Total: ₹2000', 180, 350);
+  
+  // Convert to data URL and set as image source
+  const invoicePreview = document.getElementById('invoice-test-preview');
+  invoicePreview.src = invoiceCanvas.toDataURL('image/png');
+}
+
+// Update the setupPrintTest function to create placeholder images
+function setupPrintTest() {
+  // Create placeholder images
+  createPlaceholderImages();
+  
+  const printLabelTestBtn = document.getElementById('print-label-test');
+  const printInvoiceTestBtn = document.getElementById('print-invoice-test');
+
+  printLabelTestBtn.addEventListener('click', async () => {
+    try {
+      // Get the label printer settings
+      const settings = await window.api.getPrinterSettings();
+      if (!settings || !settings.labelPrinter) {
+        alert('Please configure the Label Printer in the Printer Settings module first.');
+        return;
+      }
+
+      // Create test data for label
+      const testData = {
+        type: 'box',  // Changed from 'label' to 'box'
+        data: {
+          box_id: 'TEST-' + Date.now(),
+          roll_id: 'TEST-ROLL',
+          net_weight: 10.00,
+          bobbin_count: 5,
+          bobbin_type: 'Standard',
+          date_created: new Date().toLocaleDateString()
+        }
+      };
+
+      // Print using the configured label printer
+      await window.api.printLabel(testData);
+      alert('Label test print sent successfully!');
+    } catch (error) {
+      console.error('Error printing label test:', error);
+      alert('Failed to print label test. Please check your printer settings and try again.');
+    }
+  });
+
+  printInvoiceTestBtn.addEventListener('click', async () => {
+    try {
+      // Get the invoice printer settings
+      const settings = await window.api.getPrinterSettings();
+      if (!settings || !settings.invoicePrinter) {
+        alert('Please configure the Invoice Printer in the Printer Settings module first.');
+        return;
+      }
+
+      // Create test data for invoice
+      const testData = {
+        type: 'dispatch',  // Changed from 'invoice' to 'dispatch'
+        data: {
+          dispatch_id: 'TEST-' + Date.now(),
+          dispatch_date: new Date().toLocaleDateString(),
+          customer_name: 'Test Customer',
+          total_weight: 10.00,
+          total_bobbins: 5,
+          boxes: [{
+            box_id: 'TEST-BOX-1',
+            roll_id: 'TEST-ROLL-1',
+            net_weight: 10.00,
+            bobbin_count: 5
+          }]
+        }
+      };
+
+      // Print using the configured invoice printer
+      await window.api.printLabel(testData);
+      alert('Invoice test print sent successfully!');
+    } catch (error) {
+      console.error('Error printing invoice test:', error);
+      alert('Failed to print invoice test. Please check your printer settings and try again.');
+    }
   });
 } 

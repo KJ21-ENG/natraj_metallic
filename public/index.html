@@ -20,6 +20,7 @@
         <li><a href="#" class="nav-link" data-screen="masters">Masters</a></li>
         <li><a href="#" class="nav-link" data-screen="reports">Reports</a></li>
         <li><a href="#" class="nav-link" data-screen="printer">Printer</a></li>
+        <li><a href="#" class="nav-link" data-screen="print-test">Print Test</a></li>
       </ul>
     </nav>
   </div>
@@ -690,6 +691,35 @@
             <button type="submit" class="btn-primary">Save Settings</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <div id="print-test-screen" class="screen hidden">
+      <h1>Print Test</h1>
+      <div class="form-container">
+        <div class="print-test-container">
+          <!-- Label Printer Section -->
+          <div class="print-test-section">
+            <h3>Label Printer Test</h3>
+            <div class="print-test-preview">
+              <div class="preview-image">
+                <img src="./assets/label-test.png" alt="Label Test Preview" id="label-test-preview">
+              </div>
+              <button type="button" id="print-label-test" class="btn-primary">Print Label Test</button>
+            </div>
+          </div>
+
+          <!-- Invoice Printer Section -->
+          <div class="print-test-section">
+            <h3>Invoice Printer Test</h3>
+            <div class="print-test-preview">
+              <div class="preview-image">
+                <img src="./assets/invoice-test.png" alt="Invoice Test Preview" id="invoice-test-preview">
+              </div>
+              <button type="button" id="print-invoice-test" class="btn-primary">Print Invoice Test</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
