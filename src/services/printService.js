@@ -413,11 +413,11 @@ const printLabel = async (printData) => {
   await printWindow.loadFile(tempFile);
   
   try {
-    // Print with dialog for invoice/dispatch, silently for others
+    // Print with different options based on type
     await new Promise((resolve, reject) => {
       printWindow.webContents.print(
         {
-          silent: type === 'box', // Show dialog for dispatch/invoice, silent for box labels
+          silent: type === 'box', // Show dialog for dispatch/invoice, silent for labels
           printBackground: true,
           deviceName: selectedPrinter
         },
