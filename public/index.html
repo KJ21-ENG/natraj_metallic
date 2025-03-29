@@ -21,6 +21,7 @@
         <li><a href="#" class="nav-link" data-screen="reports">Reports</a></li>
         <li><a href="#" class="nav-link" data-screen="printer">Printer</a></li>
         <li><a href="#" class="nav-link" data-screen="print-test">Print Test</a></li>
+        <li class="nav-item"><a href="#" class="nav-link" data-screen="test-gross-weight">Test Gross Weight</a></li>
       </ul>
     </nav>
   </div>
@@ -719,6 +720,46 @@
               <button type="button" id="print-invoice-test" class="btn-primary">Print Invoice Test</button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Gross Weight Screen -->
+    <div id="test-gross-weight-screen" class="screen hidden">
+      <h1>Test Gross Weight</h1>
+      <div class="form-container">
+        <div class="form-group">
+          <label for="gross-weight-input">Gross Weight:</label>
+          <input type="text" id="gross-weight-input" class="form-control" placeholder="0.000 KG">
+          <!-- Buttons will be added dynamically -->
+        </div>
+        <div class="weight-scale-info">
+          <h3>Scale Connection</h3>
+          <p>
+            This module connects to a weight scale using a serial port connection.
+            To use this feature:
+          </p>
+          <ol>
+            <li>Connect the weight scale to your computer via serial port (USB adapter)</li>
+            <li>Click the "Connect Scale" button</li>
+            <li>Once connected, place an item on the scale</li>
+            <li>Click "Capture Weight" to read the current value</li>
+          </ol>
+          <p>
+            If connection fails, check the following:
+          </p>
+          <ul>
+            <li>Is the scale powered on?</li>
+            <li>Is the serial cable properly connected?</li>
+            <li>Do you have the correct drivers installed?</li>
+          </ul>
+          <p>
+            Default configuration:
+          </p>
+          <ul>
+            <li>Windows: COM3, 2400 baud</li>
+            <li>macOS: /dev/tty.usbserial, 2400 baud</li>
+          </ul>
         </div>
       </div>
     </div>

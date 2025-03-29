@@ -23,7 +23,8 @@
     "electron-builder": "^24.6.4"
   },
   "dependencies": {
-    "papaparse": "^5.5.2"
+    "papaparse": "^5.5.2",
+    "serialport": "^13.0.0"
   },
   "build": {
     "appId": "com.natraj.metallic",

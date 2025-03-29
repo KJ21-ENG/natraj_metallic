@@ -755,4 +755,65 @@ textarea:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Test Gross Weight Screen Styles */
+.scale-status-indicator {
+  margin-top: 10px;
+  font-weight: bold;
+  padding: 5px;
+  border-radius: 5px;
+  display: inline-block;
+}
+
+#gross-weight-input {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  height: 50px;
+  width: 200px;
+}
+
+.weight-scale-info {
+  margin-top: 20px;
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  border-left: 5px solid #6c757d;
+}
+
+.weight-scale-info h3 {
+  margin-top: 0;
+  color: #495057;
+}
+
+.weight-scale-info p, 
+.weight-scale-info ul, 
+.weight-scale-info ol {
+  font-size: 14px;
+  color: #495057;
+}
+
+.weight-scale-info ul,
+.weight-scale-info ol {
+  margin-left: 20px;
+}
+
+#connect-scale-btn, 
+#auto-connect-scale-btn,
+#capture-weight-btn {
+  margin-left: 10px;
+}
+
+#auto-connect-scale-btn {
+  background-color: #4caf50;
+}
+
+#auto-connect-scale-btn:hover {
+  background-color: #388e3c;
+}
+
+#auto-connect-scale-btn:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
 } 

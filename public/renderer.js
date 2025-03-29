@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setupReportsScreen();
   setupPrinterSettings();
   setupPrintTest();
+  setupTestGrossWeight();
   
   // Initialize the default screen (Inbound)
   document.querySelector('.nav-link[data-screen="inbound"]').classList.add('active');
@@ -2927,4 +2928,158 @@ function setupPrintTest() {
       alert('Failed to print invoice test. Please check your printer settings and try again.');
     }
   });
+}
+
+// Test Gross Weight Screen Functions
+function setupTestGrossWeight() {
+  const grossWeightInput = document.getElementById('gross-weight-input');
+  
+  const connectButton = document.createElement('button');
+  connectButton.type = 'button';
+  connectButton.className = 'btn-primary';
+  connectButton.id = 'connect-scale-btn';
+  connectButton.textContent = 'Connect Scale';
+  
+  const autoConnectButton = document.createElement('button');
+  autoConnectButton.type = 'button';
+  autoConnectButton.className = 'btn-primary';
+  autoConnectButton.id = 'auto-connect-scale-btn';
+  autoConnectButton.textContent = 'Auto-Detect Scale';
+  
+  const captureButton = document.createElement('button');
+  captureButton.type = 'button';
+  captureButton.className = 'btn-primary';
+  captureButton.id = 'capture-weight-btn';
+  captureButton.textContent = 'Capture Weight';
+  captureButton.disabled = true;
+  
+  const statusDiv = document.createElement('div');
+  statusDiv.id = 'scale-status';
+  statusDiv.className = 'scale-status-indicator';
+  statusDiv.textContent = 'Scale: Disconnected';
+  
+  // Get the form group and append the buttons after the input
+  const formGroup = grossWeightInput.closest('.form-group');
+  formGroup.appendChild(connectButton);
+  formGroup.appendChild(autoConnectButton);
+  formGroup.appendChild(captureButton);
+  formGroup.appendChild(statusDiv);
+  
+  // Check initial connection status
+  checkConnectionStatus();
+  
+  // Add event listener to the connect button
+  connectButton.addEventListener('click', async function() {
+    try {
+      if (await window.api.weightScaleStatus()) {
+        // Already connected, so disconnect
+        await window.api.disconnectWeightScale();
+        updateConnectionStatus(false);
+      } else {
+        // Not connected, so connect
+        const connected = await window.api.connectWeightScale();
+        updateConnectionStatus(connected);
+      }
+    } catch (error) {
+      console.error('Error toggling weight scale connection:', error);
+      handleConnectionError(error);
+    }
+  });
+  
+  // Add event listener to the auto-connect button
+  autoConnectButton.addEventListener('click', async function() {
+    try {
+      // Show detecting status
+      statusDiv.textContent = 'Scale: Detecting...';
+      statusDiv.style.color = '#ff9800'; // Orange
+      
+      // Disable buttons during auto-detection
+      autoConnectButton.disabled = true;
+      connectButton.disabled = true;
+      
+      // If already connected, disconnect first
+      if (await window.api.weightScaleStatus()) {
+        await window.api.disconnectWeightScale();
+      }
+      
+      // Attempt auto-detection
+      const connected = await window.api.autoDetectWeightScale();
+      updateConnectionStatus(connected);
+      
+      // Re-enable buttons
+      autoConnectButton.disabled = false;
+      connectButton.disabled = false;
+      
+    } catch (error) {
+      console.error('Error auto-detecting weight scale:', error);
+      
+      // Re-enable buttons
+      autoConnectButton.disabled = false;
+      connectButton.disabled = false;
+      
+      // Show error
+      statusDiv.textContent = 'Scale: Detection Failed';
+      statusDiv.style.color = 'red';
+      
+      alert(`Failed to auto-detect weight scale: ${error.message}\n\nPlease make sure the scale is connected and powered on.`);
+    }
+  });
+  
+  // Add event listener to the capture button
+  captureButton.addEventListener('click', async function() {
+    try {
+      const weight = await window.api.captureWeight();
+      if (weight) {
+        grossWeightInput.value = weight.toFixed(3);
+      }
+    } catch (error) {
+      console.error('Error capturing weight:', error);
+      if (error.message === 'Weight scale not connected') {
+        updateConnectionStatus(false);
+      } else {
+        alert(`Failed to capture weight: ${error.message}`);
+      }
+    }
+  });
+  
+  async function checkConnectionStatus() {
+    try {
+      const connected = await window.api.weightScaleStatus();
+      updateConnectionStatus(connected);
+    } catch (error) {
+      console.error('Error checking weight scale status:', error);
+      updateConnectionStatus(false);
+    }
+  }
+  
+  function updateConnectionStatus(connected) {
+    const statusDiv = document.getElementById('scale-status');
+    const connectButton = document.getElementById('connect-scale-btn');
+    const captureButton = document.getElementById('capture-weight-btn');
+    
+    if (connected) {
+      statusDiv.textContent = 'Scale: Connected';
+      statusDiv.style.color = 'green';
+      connectButton.textContent = 'Disconnect Scale';
+      captureButton.disabled = false;
+    } else {
+      statusDiv.textContent = 'Scale: Disconnected';
+      statusDiv.style.color = 'red';
+      connectButton.textContent = 'Connect Scale';
+      captureButton.disabled = true;
+    }
+  }
+  
+  function handleConnectionError(error) {
+    let errorMessage = 'Failed to connect to weight scale.';
+    
+    if (error.message.includes('No such file or directory') || 
+        error.message.includes('Access denied') ||
+        error.message.includes('Cannot open')) {
+      errorMessage += ' Check that the scale is connected and the correct port is selected.';
+    }
+    
+    alert(errorMessage);
+    updateConnectionStatus(false);
+  }
 } 

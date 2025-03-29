@@ -16,6 +16,7 @@ const lotService = require('./src/services/lotService');
 const machineService = require('./src/services/machineService');
 const inboundBobbinService = require('./src/services/inboundBobbinService');
 const printerSettingsService = require('./src/services/printerSettingsService');
+const weightScaleService = require('./src/services/weightScaleService');
 
 // Check if data directory exists, if not create it
 const dataDir = path.join(app.getPath('userData'), 'data');
@@ -104,6 +105,10 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Setup IPC handlers first
+  setupIPCHandlers();
+  
+  // Then create the window
   createWindow();
 
   app.on('activate', function () {
@@ -134,443 +139,499 @@ app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// IPC handlers for Roll operations
-ipcMain.handle('get-rolls', async () => {
-  try {
-    return await rollService.getAllRolls();
-  } catch (error) {
-    console.error('Error in get-rolls:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('create-roll', async (event, rollData) => {
-  try {
-    return await rollService.createRoll(rollData);
-  } catch (error) {
-    console.error('Error in create-roll:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('update-roll-status', async (event, rollId, status) => {
-  try {
-    return await rollService.updateRollStatus(rollId, status);
-  } catch (error) {
-    console.error('Error in update-roll-status:', error);
-    throw error;
-  }
-});
-
-// IPC handlers for Goods on Machine operations
-ipcMain.handle('get-goods-on-machine', async () => {
-  try {
-    return await goodsOnMachineService.getAllGoodsOnMachine();
-  } catch (error) {
-    console.error('Error in get-goods-on-machine:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('issue-to-machine', async (event, issueData) => {
-  try {
-    // Get the roll to get its weight
-    const roll = await rollService.getRollById(issueData.roll_id);
-    
-    // Add initial weight from the roll
-    issueData.initial_weight = roll.weight;
-    
-    return await goodsOnMachineService.issueToMachine(issueData);
-  } catch (error) {
-    console.error('Error in issue-to-machine:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('update-goods-on-machine', async (event, rollId, updatedData) => {
-  try {
-    return await goodsOnMachineService.updateGoodsOnMachine(rollId, updatedData);
-  } catch (error) {
-    console.error('Error in update-goods-on-machine:', error);
-    throw error;
-  }
-});
-
-// IPC handlers for Box operations
-ipcMain.handle('get-boxes', async () => {
-  try {
-    return await boxService.getAllBoxes();
-  } catch (error) {
-    console.error('Error in get-boxes:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('create-box', async (event, boxData) => {
-  try {
-    return await boxService.createBox(boxData);
-  } catch (error) {
-    console.error('Error in create-box:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('update-box-status', async (event, boxId, status) => {
-  try {
-    return await boxService.updateBoxStatus(boxId, status);
-  } catch (error) {
-    console.error('Error in update-box-status:', error);
-    throw error;
-  }
-});
-
-// IPC handlers for Dispatch operations
-ipcMain.handle('get-dispatches', async () => {
-  try {
-    return await dispatchService.getAllDispatches();
-  } catch (error) {
-    console.error('Error in get-dispatches:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('create-dispatch', async (event, dispatchData) => {
-  try {
-    return await dispatchService.createDispatch(dispatchData);
-  } catch (error) {
-    console.error('Error in create-dispatch:', error);
-    throw error;
-  }
-});
-
-// IPC handlers for utility functions
-ipcMain.handle('generate-id', async (event, prefix) => {
-  try {
-    return await csvService.generateId(prefix);
-  } catch (error) {
-    console.error('Error in generate-id:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('print-label', async (event, labelData) => {
-  try {
-    return await printService.printLabel(labelData);
-  } catch (error) {
-    console.error('Error in print-label:', error);
-    throw error;
-  }
-});
-
-// IPC handlers for system functions
-ipcMain.handle('get-app-version', () => {
-  return app.getVersion();
-});
-
-// IPC handlers for Customer operations
-ipcMain.handle('get-customers', async () => {
-  try {
-    return await customerService.getAllCustomers();
-  } catch (error) {
-    console.error('Error in get-customers:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('create-customer', async (event, customerData) => {
-  try {
-    return await customerService.createCustomer(customerData);
-  } catch (error) {
-    console.error('Error in create-customer:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('update-customer', async (event, customerId, updatedData) => {
-  try {
-    return await customerService.updateCustomer(customerId, updatedData);
-  } catch (error) {
-    console.error('Error in update-customer:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('delete-customer', async (event, customerId) => {
-  try {
-    return await customerService.deleteCustomer(customerId);
-  } catch (error) {
-    console.error('Error in delete-customer:', error);
-    throw error;
-  }
-});
-
-// IPC handlers for Bobbin Type operations
-ipcMain.handle('get-bobbin-types', async () => {
-  try {
-    return await bobbinTypeService.getAllBobbinTypes();
-  } catch (error) {
-    console.error('Error in get-bobbin-types:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('create-bobbin-type', async (event, bobbinTypeData) => {
-  try {
-    return await bobbinTypeService.createBobbinType(bobbinTypeData);
-  } catch (error) {
-    console.error('Error in create-bobbin-type:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('update-bobbin-type', async (event, bobbinTypeId, updatedData) => {
-  try {
-    return await bobbinTypeService.updateBobbinType(bobbinTypeId, updatedData);
-  } catch (error) {
-    console.error('Error in update-bobbin-type:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('delete-bobbin-type', async (event, bobbinTypeId) => {
-  try {
-    return await bobbinTypeService.deleteBobbinType(bobbinTypeId);
-  } catch (error) {
-    console.error('Error in delete-bobbin-type:', error);
-    throw error;
-  }
-});
-
-// IPC handlers for Box Type operations
-ipcMain.handle('get-box-types', async () => {
-  try {
-    return await boxTypeService.getAllBoxTypes();
-  } catch (error) {
-    console.error('Error in get-box-types:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('create-box-type', async (event, boxTypeData) => {
-  try {
-    return await boxTypeService.createBoxType(boxTypeData);
-  } catch (error) {
-    console.error('Error in create-box-type:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('update-box-type', async (event, boxTypeId, updatedData) => {
-  try {
-    return await boxTypeService.updateBoxType(boxTypeId, updatedData);
-  } catch (error) {
-    console.error('Error in update-box-type:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('delete-box-type', async (event, boxTypeId) => {
-  try {
-    return await boxTypeService.deleteBoxType(boxTypeId);
-  } catch (error) {
-    console.error('Error in delete-box-type:', error);
-    throw error;
-  }
-});
-
-// Add new IPC handlers for Lot operations
-ipcMain.handle('get-lots', async () => {
-  try {
-    return await lotService.getAllLots();
-  } catch (error) {
-    console.error('Error in get-lots:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('get-next-lot-number', async () => {
-  try {
-    return await lotService.getNextLotNumber();
-  } catch (error) {
-    console.error('Error in get-next-lot-number:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('create-lot', async (event, lotData, rollsData) => {
-  try {
-    return await lotService.createLot(lotData, rollsData);
-  } catch (error) {
-    console.error('Error in create-lot:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('get-lot-by-id', async (event, lotNumber) => {
-  try {
-    return await lotService.getLotById(lotNumber);
-  } catch (error) {
-    console.error('Error in get-lot-by-id:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('get-rolls-by-lot', async (event, lotNumber) => {
-  try {
-    return await lotService.getRollsByLotNumber(lotNumber);
-  } catch (error) {
-    console.error('Error in get-rolls-by-lot:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('delete-lot', async (event, lotNumber) => {
-  try {
-    return await lotService.deleteLot(lotNumber);
-  } catch (error) {
-    console.error('Error in delete-lot:', error);
-    throw error;
-  }
-});
-
-// IPC handlers for Machine operations
-ipcMain.handle('get-machines', async () => {
-  try {
-    return await machineService.getAllMachines();
-  } catch (error) {
-    console.error('Error in get-machines:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('get-machine-by-id', async (event, machineId) => {
-  try {
-    return await machineService.getMachineById(machineId);
-  } catch (error) {
-    console.error('Error in get-machine-by-id:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('create-machine', async (event, machineData) => {
-  try {
-    return await machineService.createMachine(machineData);
-  } catch (error) {
-    console.error('Error in create-machine:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('update-machine', async (event, machineId, updatedData) => {
-  try {
-    return await machineService.updateMachine(machineId, updatedData);
-  } catch (error) {
-    console.error('Error in update-machine:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('delete-machine', async (event, machineId) => {
-  try {
-    return await machineService.deleteMachine(machineId);
-  } catch (error) {
-    console.error('Error in delete-machine:', error);
-    throw error;
-  }
-});
-
-// Add new IPC handlers for Inbound Bobbin operations
-ipcMain.handle('get-inbound-bobbins', async () => {
-  try {
-    return await inboundBobbinService.getAllInboundBobbins();
-  } catch (error) {
-    console.error('Error in get-inbound-bobbins:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('create-inbound-bobbin', async (event, data) => {
-  console.log('Create inbound bobbin called with:', data);
-  
-  try {
-    // Verify data
-    if (!data || !data.lotData || !data.bobbins || !Array.isArray(data.bobbins)) {
-      throw new Error('Invalid data format for inbound bobbins');
+// Setup IPC handlers
+function setupIPCHandlers() {
+  // IPC handlers for Roll operations
+  ipcMain.handle('get-rolls', async () => {
+    try {
+      return await rollService.getAllRolls();
+    } catch (error) {
+      console.error('Error in get-rolls:', error);
+      throw error;
     }
-    
-    const { lotData, bobbins } = data;
-    
-    // Create new bobbin entries
-    const newBobbins = [];
-    
-    for (let i = 0; i < bobbins.length; i++) {
-      const bobbin = bobbins[i];
-      const bobbinId = await csvService.generateId('IB');
-      const newBobbin = {
-        inbound_bobbin_id: bobbinId,
-        lot_no: lotData.lot_number,
-        customer_name: bobbin.customer_name,
-        bobbin_type: bobbin.bobbin_type,
-        quantity: bobbin.quantity,
-        date_received: lotData.date_received,
-        status: 'in_stock'
-      };
+  });
+
+  ipcMain.handle('create-roll', async (event, rollData) => {
+    try {
+      return await rollService.createRoll(rollData);
+    } catch (error) {
+      console.error('Error in create-roll:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-roll-status', async (event, rollId, status) => {
+    try {
+      return await rollService.updateRollStatus(rollId, status);
+    } catch (error) {
+      console.error('Error in update-roll-status:', error);
+      throw error;
+    }
+  });
+
+  // IPC handlers for Goods on Machine operations
+  ipcMain.handle('get-goods-on-machine', async () => {
+    try {
+      return await goodsOnMachineService.getAllGoodsOnMachine();
+    } catch (error) {
+      console.error('Error in get-goods-on-machine:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('issue-to-machine', async (event, issueData) => {
+    try {
+      // Get the roll to get its weight
+      const roll = await rollService.getRollById(issueData.roll_id);
       
-      await inboundBobbinService.createInboundBobbin(newBobbin);
-      newBobbins.push(newBobbin);
+      // Add initial weight from the roll
+      issueData.initial_weight = roll.weight;
+      
+      return await goodsOnMachineService.issueToMachine(issueData);
+    } catch (error) {
+      console.error('Error in issue-to-machine:', error);
+      throw error;
     }
+  });
+
+  ipcMain.handle('update-goods-on-machine', async (event, rollId, updatedData) => {
+    try {
+      return await goodsOnMachineService.updateGoodsOnMachine(rollId, updatedData);
+    } catch (error) {
+      console.error('Error in update-goods-on-machine:', error);
+      throw error;
+    }
+  });
+
+  // IPC handlers for Box operations
+  ipcMain.handle('get-boxes', async () => {
+    try {
+      return await boxService.getAllBoxes();
+    } catch (error) {
+      console.error('Error in get-boxes:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-box', async (event, boxData) => {
+    try {
+      return await boxService.createBox(boxData);
+    } catch (error) {
+      console.error('Error in create-box:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-box-status', async (event, boxId, status) => {
+    try {
+      return await boxService.updateBoxStatus(boxId, status);
+    } catch (error) {
+      console.error('Error in update-box-status:', error);
+      throw error;
+    }
+  });
+
+  // IPC handlers for Dispatch operations
+  ipcMain.handle('get-dispatches', async () => {
+    try {
+      return await dispatchService.getAllDispatches();
+    } catch (error) {
+      console.error('Error in get-dispatches:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-dispatch', async (event, dispatchData) => {
+    try {
+      return await dispatchService.createDispatch(dispatchData);
+    } catch (error) {
+      console.error('Error in create-dispatch:', error);
+      throw error;
+    }
+  });
+
+  // IPC handlers for utility functions
+  ipcMain.handle('generate-id', async (event, prefix) => {
+    try {
+      return await csvService.generateId(prefix);
+    } catch (error) {
+      console.error('Error in generate-id:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('print-label', async (event, labelData) => {
+    try {
+      return await printService.printLabel(labelData);
+    } catch (error) {
+      console.error('Error in print-label:', error);
+      throw error;
+    }
+  });
+
+  // IPC handlers for system functions
+  ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+  });
+
+  // IPC handlers for Customer operations
+  ipcMain.handle('get-customers', async () => {
+    try {
+      return await customerService.getAllCustomers();
+    } catch (error) {
+      console.error('Error in get-customers:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-customer', async (event, customerData) => {
+    try {
+      return await customerService.createCustomer(customerData);
+    } catch (error) {
+      console.error('Error in create-customer:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-customer', async (event, customerId, updatedData) => {
+    try {
+      return await customerService.updateCustomer(customerId, updatedData);
+    } catch (error) {
+      console.error('Error in update-customer:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('delete-customer', async (event, customerId) => {
+    try {
+      return await customerService.deleteCustomer(customerId);
+    } catch (error) {
+      console.error('Error in delete-customer:', error);
+      throw error;
+    }
+  });
+
+  // IPC handlers for Bobbin Type operations
+  ipcMain.handle('get-bobbin-types', async () => {
+    try {
+      return await bobbinTypeService.getAllBobbinTypes();
+    } catch (error) {
+      console.error('Error in get-bobbin-types:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-bobbin-type', async (event, bobbinTypeData) => {
+    try {
+      return await bobbinTypeService.createBobbinType(bobbinTypeData);
+    } catch (error) {
+      console.error('Error in create-bobbin-type:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-bobbin-type', async (event, bobbinTypeId, updatedData) => {
+    try {
+      return await bobbinTypeService.updateBobbinType(bobbinTypeId, updatedData);
+    } catch (error) {
+      console.error('Error in update-bobbin-type:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('delete-bobbin-type', async (event, bobbinTypeId) => {
+    try {
+      return await bobbinTypeService.deleteBobbinType(bobbinTypeId);
+    } catch (error) {
+      console.error('Error in delete-bobbin-type:', error);
+      throw error;
+    }
+  });
+
+  // IPC handlers for Box Type operations
+  ipcMain.handle('get-box-types', async () => {
+    try {
+      return await boxTypeService.getAllBoxTypes();
+    } catch (error) {
+      console.error('Error in get-box-types:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-box-type', async (event, boxTypeData) => {
+    try {
+      return await boxTypeService.createBoxType(boxTypeData);
+    } catch (error) {
+      console.error('Error in create-box-type:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-box-type', async (event, boxTypeId, updatedData) => {
+    try {
+      return await boxTypeService.updateBoxType(boxTypeId, updatedData);
+    } catch (error) {
+      console.error('Error in update-box-type:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('delete-box-type', async (event, boxTypeId) => {
+    try {
+      return await boxTypeService.deleteBoxType(boxTypeId);
+    } catch (error) {
+      console.error('Error in delete-box-type:', error);
+      throw error;
+    }
+  });
+
+  // Add new IPC handlers for Lot operations
+  ipcMain.handle('get-lots', async () => {
+    try {
+      return await lotService.getAllLots();
+    } catch (error) {
+      console.error('Error in get-lots:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-next-lot-number', async () => {
+    try {
+      return await lotService.getNextLotNumber();
+    } catch (error) {
+      console.error('Error in get-next-lot-number:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-lot', async (event, lotData, rollsData) => {
+    try {
+      return await lotService.createLot(lotData, rollsData);
+    } catch (error) {
+      console.error('Error in create-lot:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-lot-by-id', async (event, lotNumber) => {
+    try {
+      return await lotService.getLotById(lotNumber);
+    } catch (error) {
+      console.error('Error in get-lot-by-id:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-rolls-by-lot', async (event, lotNumber) => {
+    try {
+      return await lotService.getRollsByLotNumber(lotNumber);
+    } catch (error) {
+      console.error('Error in get-rolls-by-lot:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('delete-lot', async (event, lotNumber) => {
+    try {
+      return await lotService.deleteLot(lotNumber);
+    } catch (error) {
+      console.error('Error in delete-lot:', error);
+      throw error;
+    }
+  });
+
+  // IPC handlers for Machine operations
+  ipcMain.handle('get-machines', async () => {
+    try {
+      return await machineService.getAllMachines();
+    } catch (error) {
+      console.error('Error in get-machines:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-machine-by-id', async (event, machineId) => {
+    try {
+      return await machineService.getMachineById(machineId);
+    } catch (error) {
+      console.error('Error in get-machine-by-id:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-machine', async (event, machineData) => {
+    try {
+      return await machineService.createMachine(machineData);
+    } catch (error) {
+      console.error('Error in create-machine:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-machine', async (event, machineId, updatedData) => {
+    try {
+      return await machineService.updateMachine(machineId, updatedData);
+    } catch (error) {
+      console.error('Error in update-machine:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('delete-machine', async (event, machineId) => {
+    try {
+      return await machineService.deleteMachine(machineId);
+    } catch (error) {
+      console.error('Error in delete-machine:', error);
+      throw error;
+    }
+  });
+
+  // Add new IPC handlers for Inbound Bobbin operations
+  ipcMain.handle('get-inbound-bobbins', async () => {
+    try {
+      return await inboundBobbinService.getAllInboundBobbins();
+    } catch (error) {
+      console.error('Error in get-inbound-bobbins:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-inbound-bobbin', async (event, data) => {
+    console.log('Create inbound bobbin called with:', data);
     
-    return { success: true, count: newBobbins.length };
-  } catch (error) {
-    console.error('Error in create-inbound-bobbin:', error);
-    throw error;
-  }
-});
+    try {
+      // Verify data
+      if (!data || !data.lotData || !data.bobbins || !Array.isArray(data.bobbins)) {
+        throw new Error('Invalid data format for inbound bobbins');
+      }
+      
+      const { lotData, bobbins } = data;
+      
+      // Create new bobbin entries
+      const newBobbins = [];
+      
+      for (let i = 0; i < bobbins.length; i++) {
+        const bobbin = bobbins[i];
+        const bobbinId = await csvService.generateId('IB');
+        const newBobbin = {
+          inbound_bobbin_id: bobbinId,
+          lot_no: lotData.lot_number,
+          customer_name: bobbin.customer_name,
+          bobbin_type: bobbin.bobbin_type,
+          quantity: bobbin.quantity,
+          date_received: lotData.date_received,
+          status: 'in_stock'
+        };
+        
+        await inboundBobbinService.createInboundBobbin(newBobbin);
+        newBobbins.push(newBobbin);
+      }
+      
+      return { success: true, count: newBobbins.length };
+    } catch (error) {
+      console.error('Error in create-inbound-bobbin:', error);
+      throw error;
+    }
+  });
 
-ipcMain.handle('update-inbound-bobbin-status', async (event, bobbinId, status) => {
-  try {
-    await inboundBobbinService.updateInboundBobbinStatus(bobbinId, status);
-    return true;
-  } catch (error) {
-    console.error('Error in update-inbound-bobbin-status:', error);
-    throw error;
-  }
-});
+  ipcMain.handle('update-inbound-bobbin-status', async (event, bobbinId, status) => {
+    try {
+      await inboundBobbinService.updateInboundBobbinStatus(bobbinId, status);
+      return true;
+    } catch (error) {
+      console.error('Error in update-inbound-bobbin-status:', error);
+      throw error;
+    }
+  });
 
-ipcMain.handle('delete-inbound-bobbin', async (event, lotNumber) => {
-  try {
-    await inboundBobbinService.deleteInboundBobbinsByLot(lotNumber);
-    return true;
-  } catch (error) {
-    console.error('Error in delete-inbound-bobbin:', error);
-    throw error;
-  }
-});
+  ipcMain.handle('delete-inbound-bobbin', async (event, lotNumber) => {
+    try {
+      await inboundBobbinService.deleteInboundBobbinsByLot(lotNumber);
+      return true;
+    } catch (error) {
+      console.error('Error in delete-inbound-bobbin:', error);
+      throw error;
+    }
+  });
 
-// Printer Settings IPC Handlers
-ipcMain.handle('get-printer-settings', () => {
-  try {
-    return printerSettingsService.getSettings();
-  } catch (error) {
-    console.error('Error in get-printer-settings:', error);
-    throw error;
-  }
-});
+  // Weight Scale IPC Handlers
+  ipcMain.handle('connect-weight-scale', async (event, options) => {
+    try {
+      return await weightScaleService.initialize(options);
+    } catch (error) {
+      console.error('Error connecting to weight scale:', error);
+      throw error;
+    }
+  });
 
-ipcMain.handle('update-printer-settings', (event, settings) => {
-  try {
-    return printerSettingsService.updateSettings(settings);
-  } catch (error) {
-    console.error('Error in update-printer-settings:', error);
-    throw error;
-  }
-});
+  ipcMain.handle('auto-detect-weight-scale', async () => {
+    try {
+      return await weightScaleService.autoDetectAndConnect();
+    } catch (error) {
+      console.error('Error auto-detecting weight scale:', error);
+      throw error;
+    }
+  });
 
-ipcMain.handle('get-available-printers', async () => {
-  try {
-    return await printerSettingsService.getAvailablePrinters();
-  } catch (error) {
-    console.error('Error in get-available-printers:', error);
-    throw error;
-  }
-}); 
+  ipcMain.handle('disconnect-weight-scale', async () => {
+    try {
+      return await weightScaleService.disconnect();
+    } catch (error) {
+      console.error('Error disconnecting from weight scale:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('capture-weight', async () => {
+    try {
+      if (!weightScaleService.isConnected) {
+        throw new Error('Weight scale not connected');
+      }
+      return await weightScaleService.captureWeight();
+    } catch (error) {
+      console.error('Error capturing weight:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-available-ports', async () => {
+    try {
+      return await weightScaleService.getAvailablePorts();
+    } catch (error) {
+      console.error('Error getting available ports:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('weight-scale-status', () => {
+    return weightScaleService.isConnected;
+  });
+
+  // Printer Settings IPC Handlers
+  ipcMain.handle('get-printer-settings', () => {
+    try {
+      return printerSettingsService.getSettings();
+    } catch (error) {
+      console.error('Error in get-printer-settings:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-printer-settings', (event, settings) => {
+    try {
+      return printerSettingsService.updateSettings(settings);
+    } catch (error) {
+      console.error('Error in update-printer-settings:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-available-printers', async () => {
+    try {
+      return await printerSettingsService.getAvailablePrinters();
+    } catch (error) {
+      console.error('Error in get-available-printers:', error);
+      throw error;
+    }
+  });
+} 

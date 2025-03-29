@@ -70,5 +70,13 @@ contextBridge.exposeInMainWorld(
     getPrinterSettings: () => ipcRenderer.invoke('get-printer-settings'),
     updatePrinterSettings: (settings) => ipcRenderer.invoke('update-printer-settings', settings),
     getAvailablePrinters: () => ipcRenderer.invoke('get-available-printers'),
+
+    // Weight Scale API
+    connectWeightScale: (options) => ipcRenderer.invoke('connect-weight-scale', options),
+    autoDetectWeightScale: () => ipcRenderer.invoke('auto-detect-weight-scale'),
+    disconnectWeightScale: () => ipcRenderer.invoke('disconnect-weight-scale'),
+    captureWeight: () => ipcRenderer.invoke('capture-weight'),
+    getAvailablePorts: () => ipcRenderer.invoke('get-available-ports'),
+    weightScaleStatus: () => ipcRenderer.invoke('weight-scale-status'),
   }
 ); 
